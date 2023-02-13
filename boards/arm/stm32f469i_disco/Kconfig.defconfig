@@ -12,5 +12,32 @@ config SPI_STM32_INTERRUPT
 	default y
 	depends on SPI
 
+if DISPLAY
+
+config KSCAN
+	default y
+
+# MEMC needs to be enabled in order to store
+# display buffer to external SDRAM connected to FMC
+config MEMC
+	default y
+
+endif # DISPLAY
+
+if KSCAN
+
+#- https://github.com/STMicroelectronics/STM32CubeF7/blob/7e354cf248d84d84424e852ab012b345e3155640/Drivers/BSP/STM32746G-Discovery/stm32746g_discovery_ts.h#L161
+#- https://github.com/STMicroelectronics/STM32CubeF7/blob/7e354cf248d84d84424e852ab012b345e3155640/Drivers/BSP/STM32746G-Discovery/stm32746g_discovery_ts.h#L169C2-L170
+#+ https://github.com/STMicroelectronics/STM32CubeF4/blob/c031cf7d237abb4af772531a4b8fa0182b8d4427/Drivers/BSP/STM32469I-Discovery/stm32469i_discovery_ts.h#L169
+#- ft5336.h https://github.com/STMicroelectronics/STM32CubeF7/blob/master/Drivers/BSP/Components/ft5336/ft5336.h
+#+ ft6x06.h https://github.com/STMicroelectronics/STM32CubeF4/blob/master/Drivers/BSP/Components/ft6x06/ft6x06.h
+# https://github.com/zephyrproject-rtos/zephyr/blob/712d682cf7f834f37f4a27ce078387cef17914d5/drivers/kscan/Kconfig.ft5336#L6
+# bool "FT5XX6/FT6XX6 capacitive touch panel driver"
+config KSCAN_FT5336_INTERRUPT
+	default y
+endif # KSCAN
+
+config DISK_DRIVER_SDMMC
+	default y if DISK_DRIVERS
 
 endif # BOARD_STM32F469I_DISCO

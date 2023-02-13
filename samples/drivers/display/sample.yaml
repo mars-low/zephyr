@@ -97,3 +97,9 @@ tests:
     harness: console
     harness_config:
       fixture: fixture_display
+  sample.display.otm8009a:
+    platform_allow: stm32f469i_disco
+    tags: display
+    harness: console
+    harness_config:
+      fixture: fixture_display
