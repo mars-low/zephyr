@@ -82,7 +82,7 @@
 &pll {
 	div-m = <8>;
 	mul-n = <336>;
-	div-p = <2>; // 42MHz
+	div-p = <2>;
 	div-q = <7>;
 	clocks = <&clk_hse>;
 	status = "okay";
@@ -116,10 +116,10 @@
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
-	touch_controller: ft5336@38 {
+	touch_controller: ft5336@54 {
 		compatible = "focaltech,ft5336";
-		reg = <0x38>;
-		int-gpios = <&gpioi 13 GPIO_ACTIVE_LOW>;
+		reg = <0x54>;
+		int-gpios = <&gpioj 5 GPIO_ACTIVE_LOW>;
 	};
 };
 
@@ -261,12 +261,13 @@ zephyr_udc0: &usbotg_fs {
 	status = "okay";
 
 	/* DSI HOST dedicated PLL
+	 * refclk = CLK_IN = HSE = 8 MHz
 	 * F_VCO = CLK_IN / pll-idf * 2 * pll-ndiv
-	 * PHI = F_VCO / 2 / (1 << pll-odf) = lane_byte_clk
-	 *     = 25 MHz / 5 * 2 * 100 / 2 / (1<<0) / 8 = 62.5 MHz
+	 * PHI = F_VCO / 2 / (1 << pll-odf) / 8 = lane_byte_clk
+	 *     = 8 MHz / 2 * 2 * 125 / 2 / (1<<0) / 8 = 62.5 MHz
 	 */
-	pll-ndiv = <100>;
-	pll-idf = <5>;
+	pll-ndiv = <125>;
+	pll-idf = <2>;
 	pll-odf = <0>;
 
 	vs-active-high;
@@ -285,8 +286,8 @@ zephyr_udc0: &usbotg_fs {
 };
 
 &otm8009a {
-	reset-gpios = <&gpiog 3 GPIO_ACTIVE_HIGH>;
-	bl-gpios = <&gpioj 12 GPIO_ACTIVE_HIGH>;
+	reset-gpios = <&gpioh 7 GPIO_ACTIVE_LOW>; //5 RESX Reset, active low PH7
+	bl-gpios = <&gpioa 3 GPIO_ACTIVE_HIGH>;
 	data-lanes = <2>;
 	pixel-format = <MIPI_DSI_PIXFMT_RGB888>;
 	rotation = <90>;

@@ -41,9 +41,9 @@
 			reg = <0x40016c00 0x800>;
 			clock-names = "dsiclk", "refclk", "pixelclk";
 			clocks = <&rcc STM32_CLOCK_BUS_APB2 0x8000000>,
-				 <&rcc STM32_SRC_SYSCLK DSI_SEL(1)>,
-				 <&rcc STM32_SRC_PLL_P DSI_SEL(1)>;
-			resets = <&rctl STM32_RESET(APB2, 4U)>;
+				 <&rcc DCKCFGR_REG DSI_SEL(0)>,
+				 <&rcc STM32_CLOCK_BUS_APB2 0x4000000>;
+			resets = <&rctl STM32_RESET(APB2, 27U)>;
 			status = "disabled";
 		};
 	};
