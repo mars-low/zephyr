@@ -254,6 +254,7 @@
 #if DT_SAME_NODE(DT_PLL3_CLOCKS_CTRL, DT_NODELABEL(clk_hse))
 #define STM32_PLL3_SRC_HSE	1
 #endif
+#endif
 
 /** PLLI2S clock source */
 #if DT_NODE_HAS_STATUS(DT_NODELABEL(plli2s), okay) && \
@@ -267,6 +268,7 @@
 #endif
 #if DT_SAME_NODE(DT_PLLI2S_CLOCKS_CTRL, DT_NODELABEL(clk_hse))
 #define STM32_PLLI2S_SRC_HSE	1
+#endif
 #endif
 
 /** PLLSAI clock source */
@@ -282,7 +284,6 @@
 #if DT_SAME_NODE(DT_PLLSAI_CLOCKS_CTRL, DT_NODELABEL(clk_hse))
 #define STM32_PLLSAI_SRC_HSE	1
 #endif
-
 #endif
 
 

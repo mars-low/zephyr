@@ -38,6 +38,9 @@
 	};
 
 	clocks {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		
 		clk_hse: clk-hse {
 			#clock-cells = <0>;
 			compatible = "st,stm32-hse-clock";
