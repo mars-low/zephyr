@@ -39,6 +39,7 @@
 #define STM32_SRC_HSI	0x00D
 /** System clock */
 #define STM32_SRC_SYSCLK 0x010
+#define STM32_SRC_PLLSAI_DIVR	0x011
 
 /**
  * @brief STM32 clock configuration bit field.

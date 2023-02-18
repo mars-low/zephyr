@@ -45,8 +45,8 @@
 			// DSI Clock Mux is not used - driver always configures to use PHY DSI clock 
 			clock-names = "dsiclk", "refclk", "pixelclk";
 			clocks = <&rcc STM32_CLOCK_BUS_APB2 0x8000000>,
-				 <&rcc STM32_SRC_HSE DSI_SEL(0)>,	// DSI_SEL(0) - whatever
-				 <&rcc STM32_SRC_PLLSAI_R 0x0>;		// 0x0 whatever - not used
+				 <&rcc STM32_SRC_HSE 0x0>,	// 0x0 - whatever
+				 <&rcc STM32_SRC_PLLSAI_DIVR 0x0>;		// 0x0 whatever - not used
 			resets = <&rctl STM32_RESET(APB2, 27U)>;
 			status = "disabled";
 		};

@@ -158,7 +158,6 @@ static int mipi_dsi_stm32_host_init(const struct device *dev)
 		LOG_ERR("Get pixel clock failed! (%d)", ret);
 		return ret;
 	}
-	data->pixel_clk_khz = 42000000;
 
 	data->pixel_clk_khz /= 1000;
 	ret = clock_control_get_rate(config->rcc, (clock_control_subsys_t)&config->ref_clk,
@@ -167,8 +166,6 @@ static int mipi_dsi_stm32_host_init(const struct device *dev)
 		LOG_ERR("Get HSE clock failed! (%d)", ret);
 		return ret;
 	}
-
-	hse_clock = 8000000;
 
 	/* LANE_BYTE_CLOCK = CLK_IN / PLLIDF * 2 * PLLNDIV / 2 / PLLODF / 8 */
 	data->lane_clk_khz = hse_clock / data->pll_init.PLLIDF * 2 * data->pll_init.PLLNDIV / 2 /
