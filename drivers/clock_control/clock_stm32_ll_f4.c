@@ -66,9 +66,9 @@
 
 /* ARM Sys CPU Clock before HPRE prescaler */
 #define SYSCLK_FREQ	((SYSCLKSRC_FREQ)/(STM32_D1CPRE))
-#define AHB_FREQ	((SYSCLK_FREQ)/(STM32_HPRE))
-#define APB1_FREQ	((AHB_FREQ)/(STM32_D2PPRE1))
-#define APB2_FREQ	((AHB_FREQ)/(STM32_D2PPRE2))
+#define AHB_FREQ	((SYSCLK_FREQ)/(STM32_AHB_PRESCALER))
+#define APB1_FREQ	((AHB_FREQ)/(STM32_APB1_PRESCALER))
+#define APB2_FREQ	((AHB_FREQ)/(STM32_APB2_PRESCALER))
 
 /* Datasheet maximum frequency definitions */
 #if defined(CONFIG_SOC_STM32H743XX) ||\
@@ -193,7 +193,7 @@ static uint32_t get_hclk_frequency(void)
 #endif /* STM32_PLL_ENABLED */
 	}
 
-	return get_bus_clock(sysclk, STM32_HPRE);
+	return get_bus_clock(sysclk, STM32_AHB_PRESCALER);
 }
 
 #if !defined(CONFIG_CPU_CORTEX_M4)
@@ -405,10 +405,10 @@ static int stm32_clock_control_get_subsys_rate(const struct device *clock,
 #if defined(CONFIG_CPU_CORTEX_M4)
 	uint32_t ahb_clock = SystemCoreClock;
 #else
-	uint32_t ahb_clock = get_bus_clock(SystemCoreClock, STM32_HPRE);
+	uint32_t ahb_clock = get_bus_clock(SystemCoreClock, STM32_AHB_PRESCALER);
 #endif
-	uint32_t apb1_clock = get_bus_clock(ahb_clock, STM32_D2PPRE1);
-	uint32_t apb2_clock = get_bus_clock(ahb_clock, STM32_D2PPRE2);
+	uint32_t apb1_clock = get_bus_clock(ahb_clock, STM32_APB1_PRESCALER);
+	uint32_t apb2_clock = get_bus_clock(ahb_clock, STM32_APB2_PRESCALER);
 
 	ARG_UNUSED(clock);
 
@@ -753,7 +753,7 @@ static int stm32_clock_control_init(const struct device *dev)
 	old_hclk_freq = get_hclk_frequency();
 	/* AHB is HCLK clock to configure */
 	new_hclk_freq = get_bus_clock(CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC,
-				      STM32_HPRE);
+				      STM32_AHB_PRESCALER);
 
 	/* Set flash latency */
 	/* AHB/AXI/HCLK clock is SYSCLK / HPRE */
@@ -766,9 +766,9 @@ static int stm32_clock_control_init(const struct device *dev)
 	/* Prevents APB clock to go over limits */
 	/* Set buses (Sys,AHB, APB1, APB2) prescalers */
 	LL_RCC_SetSysPrescaler(sysclk_prescaler(STM32_D1CPRE));
-	LL_RCC_SetAHBPrescaler(ahb_prescaler(STM32_HPRE));
-	LL_RCC_SetAPB1Prescaler(apb1_prescaler(STM32_D2PPRE1));
-	LL_RCC_SetAPB2Prescaler(apb2_prescaler(STM32_D2PPRE2));
+	LL_RCC_SetAHBPrescaler(ahb_prescaler(STM32_AHB_PRESCALER));
+	LL_RCC_SetAPB1Prescaler(apb1_prescaler(STM32_APB1_PRESCALER));
+	LL_RCC_SetAPB2Prescaler(apb2_prescaler(STM32_APB2_PRESCALER));
 
 	/* Set up sys clock */
 	if (IS_ENABLED(STM32_SYSCLK_SRC_PLL)) {
