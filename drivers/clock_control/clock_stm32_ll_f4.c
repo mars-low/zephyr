@@ -30,10 +30,7 @@
 #define z_apb2_prescaler(v) LL_RCC_APB2_DIV_ ## v
 #define apb2_prescaler(v) z_apb2_prescaler(v)
 
-/* Macro to check for clock feasibility */
-/* It is Cortex M7's responsibility to setup clock tree */
-/* This check should only be performed for the M7 core code */
-#ifdef CONFIG_CPU_CORTEX_M7
+/* Macros to check for clock feasibility */
 
 /* Choose PLL SRC */
 #if defined(STM32_PLL_SRC_HSI)
@@ -117,15 +114,9 @@
 #endif
 
 /* end of clock feasability check */
-#endif /* CONFIG_CPU_CORTEX_M7 */
 
-#if defined(CONFIG_CPU_CORTEX_M7)
-/* Offset to access bus clock registers from M7 (or only) core */
-#define STM32H7_BUS_CLK_REG	DT_REG_ADDR(DT_NODELABEL(rcc))
-#elif defined(CONFIG_CPU_CORTEX_M4)
-/* Offset to access bus clock registers from M4 core */
-#define STM32H7_BUS_CLK_REG	DT_REG_ADDR(DT_NODELABEL(rcc)) + 0x60
-#endif
+/* Offset to access bus clock registers */
+#define STM32F4_BUS_CLK_REG	DT_REG_ADDR(DT_NODELABEL(rcc))
 
 static uint32_t get_bus_clock(uint32_t clock, uint32_t prescaler)
 {
@@ -323,7 +314,7 @@ static inline int stm32_clock_control_on(const struct device *dev,
 
 	z_stm32_hsem_lock(CFG_HW_RCC_SEMID, HSEM_LOCK_DEFAULT_RETRY);
 
-	sys_set_bits(STM32H7_BUS_CLK_REG + pclken->bus, pclken->enr);
+	sys_set_bits(STM32F4_BUS_CLK_REG + pclken->bus, pclken->enr);
 
 	z_stm32_hsem_unlock(CFG_HW_RCC_SEMID);
 
@@ -344,7 +335,7 @@ static inline int stm32_clock_control_off(const struct device *dev,
 
 	z_stm32_hsem_lock(CFG_HW_RCC_SEMID, HSEM_LOCK_DEFAULT_RETRY);
 
-	sys_clear_bits(STM32H7_BUS_CLK_REG + pclken->bus, pclken->enr);
+	sys_clear_bits(STM32F4_BUS_CLK_REG + pclken->bus, pclken->enr);
 
 	z_stm32_hsem_unlock(CFG_HW_RCC_SEMID);
 
@@ -709,7 +700,6 @@ static int set_up_plls(void)
 	return 0;
 }
 
-#if defined(CONFIG_CPU_CORTEX_M7)
 static int stm32_clock_control_init(const struct device *dev)
 {
 	uint32_t old_hclk_freq = 0;
@@ -796,17 +786,6 @@ static int stm32_clock_control_init(const struct device *dev)
 
 	return r;
 }
-#else
-static int stm32_clock_control_init(const struct device *dev)
-{
-	ARG_UNUSED(dev);
-
-	/* Update CMSIS variable */
-	SystemCoreClock = CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC;
-
-	return 0;
-}
-#endif /* CONFIG_CPU_CORTEX_M7 */
 
 /**
  * @brief RCC device, note that priority is intentionally set to 1 so
