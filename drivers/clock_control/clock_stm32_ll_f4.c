@@ -33,9 +33,6 @@
 #define z_apb2_prescaler(v) LL_RCC_APB2_DIV_ ## v
 #define apb2_prescaler(v) z_apb2_prescaler(v)
 
-#define z_apb3_prescaler(v) LL_RCC_APB3_DIV_ ## v
-#define apb3_prescaler(v) z_apb3_prescaler(v)
-
 #define z_apb4_prescaler(v) LL_RCC_APB4_DIV_ ## v
 #define apb4_prescaler(v) z_apb4_prescaler(v)
 
@@ -82,7 +79,6 @@
 #define AHB_FREQ	((SYSCLK_FREQ)/(STM32_HPRE))
 #define APB1_FREQ	((AHB_FREQ)/(STM32_D2PPRE1))
 #define APB2_FREQ	((AHB_FREQ)/(STM32_D2PPRE2))
-#define APB3_FREQ	((AHB_FREQ)/(STM32_D1PPRE))
 #define APB4_FREQ	((AHB_FREQ)/(STM32_D3PPRE))
 
 /* Datasheet maximum frequency definitions */
@@ -126,9 +122,6 @@
 #endif
 #if APB2_FREQ > APBx_FREQ_MAX
 #error "APB2 frequency is too high!"
-#endif
-#if APB3_FREQ > APBx_FREQ_MAX
-#error "APB3 frequency is too high!"
 #endif
 #if APB4_FREQ > APBx_FREQ_MAX
 #error "APB4 frequency is too high!"
@@ -438,7 +431,6 @@ static int stm32_clock_control_get_subsys_rate(const struct device *clock,
 #endif
 	uint32_t apb1_clock = get_bus_clock(ahb_clock, STM32_D2PPRE1);
 	uint32_t apb2_clock = get_bus_clock(ahb_clock, STM32_D2PPRE2);
-	uint32_t apb3_clock = get_bus_clock(ahb_clock, STM32_D1PPRE);
 	uint32_t apb4_clock = get_bus_clock(ahb_clock, STM32_D3PPRE);
 
 	ARG_UNUSED(clock);
@@ -456,9 +448,6 @@ static int stm32_clock_control_get_subsys_rate(const struct device *clock,
 		break;
 	case STM32_CLOCK_BUS_APB2:
 		*rate = apb2_clock;
-		break;
-	case STM32_CLOCK_BUS_APB3:
-		*rate = apb3_clock;
 		break;
 	case STM32_CLOCK_BUS_APB4:
 		*rate = apb4_clock;
@@ -829,7 +818,6 @@ static int stm32_clock_control_init(const struct device *dev)
 	LL_RCC_SetAHBPrescaler(ahb_prescaler(STM32_HPRE));
 	LL_RCC_SetAPB1Prescaler(apb1_prescaler(STM32_D2PPRE1));
 	LL_RCC_SetAPB2Prescaler(apb2_prescaler(STM32_D2PPRE2));
-	LL_RCC_SetAPB3Prescaler(apb3_prescaler(STM32_D1PPRE));
 	LL_RCC_SetAPB4Prescaler(apb4_prescaler(STM32_D3PPRE));
 
 	/* Set up sys clock */
