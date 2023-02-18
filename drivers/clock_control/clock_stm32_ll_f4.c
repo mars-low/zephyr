@@ -65,9 +65,6 @@
 
 /* end of clock feasability check */
 
-/* Offset to access bus clock registers */
-#define STM32F4_BUS_CLK_REG	DT_REG_ADDR(DT_NODELABEL(rcc))
-
 static uint32_t get_bus_clock(uint32_t clock, uint32_t prescaler)
 {
 	return clock / prescaler;
@@ -123,13 +120,12 @@ static uint32_t get_hclk_frequency(void)
 	return get_bus_clock(sysclk, STM32_AHB_PRESCALER);
 }
 
-/** @brief Verifies clock is part of actve clock configuration */
+/** @brief Verifies clock is part of active clock configuration */
 static int enabled_clock(uint32_t src_clk)
 {
 
 	if ((src_clk == STM32_SRC_SYSCLK) ||
 	    ((src_clk == STM32_SRC_HSE) && IS_ENABLED(STM32_HSE_ENABLED)) ||
-
 	    ((src_clk == STM32_SRC_HSI) && IS_ENABLED(STM32_HSI_ENABLED)) ||
 	    ((src_clk == STM32_SRC_LSE) && IS_ENABLED(STM32_LSE_ENABLED)) ||
 	    ((src_clk == STM32_SRC_LSI) && IS_ENABLED(STM32_LSI_ENABLED)) ||
@@ -162,7 +158,7 @@ static inline int stm32_clock_control_on(const struct device *dev,
 
 	z_stm32_hsem_lock(CFG_HW_RCC_SEMID, HSEM_LOCK_DEFAULT_RETRY);
 
-	sys_set_bits(STM32F4_BUS_CLK_REG + pclken->bus, pclken->enr);
+	sys_set_bits(DT_REG_ADDR(DT_NODELABEL(rcc)) + pclken->bus, pclken->enr);
 
 	z_stm32_hsem_unlock(CFG_HW_RCC_SEMID);
 
@@ -183,7 +179,7 @@ static inline int stm32_clock_control_off(const struct device *dev,
 
 	z_stm32_hsem_lock(CFG_HW_RCC_SEMID, HSEM_LOCK_DEFAULT_RETRY);
 
-	sys_clear_bits(STM32F4_BUS_CLK_REG + pclken->bus, pclken->enr);
+	sys_clear_bits(DT_REG_ADDR(DT_NODELABEL(rcc)) + pclken->bus, pclken->enr);
 
 	z_stm32_hsem_unlock(CFG_HW_RCC_SEMID);
 
@@ -237,6 +233,8 @@ static int stm32_clock_control_get_subsys_rate(const struct device *clock,
 	case STM32_CLOCK_BUS_AHB1:
 	case STM32_CLOCK_BUS_AHB2:
 	case STM32_CLOCK_BUS_AHB3:
+		*rate = ahb_clock;
+		break;
 	case STM32_CLOCK_BUS_APB1:
 		*rate = apb1_clock;
 		break;
@@ -343,7 +341,6 @@ static struct clock_control_driver_api stm32_clock_control_api = {
 __unused
 static void set_up_fixed_clock_sources(void)
 {
-
 	if (IS_ENABLED(STM32_HSE_ENABLED)) {
 		/* Enable HSE oscillator */
 		if (IS_ENABLED(STM32_HSE_BYPASS)) {
