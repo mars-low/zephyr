@@ -18,10 +18,7 @@
 
 
 /* Macros to fill up prescaler values */
-#define z_sysclk_prescaler(v) LL_RCC_SYSCLK_DIV_ ## v
-#define sysclk_prescaler(v) z_sysclk_prescaler(v)
-
-#define z_ahb_prescaler(v) LL_RCC_AHB_DIV_ ## v
+#define z_ahb_prescaler(v) LL_RCC_SYSCLK_DIV_ ## v
 #define ahb_prescaler(v) z_ahb_prescaler(v)
 
 #define z_apb1_prescaler(v) LL_RCC_APB1_DIV_ ## v
@@ -411,10 +408,10 @@ static int set_up_plls(void)
 	/* Can be HSE , HSI 64Mhz/HSIDIV*/
 	if (IS_ENABLED(STM32_PLL_SRC_HSE)) {
 		/* Main PLL configuration and activation */
-		LL_RCC_PLL_SetSource(LL_RCC_PLLSOURCE_HSE);
+		LL_RCC_PLL_SetMainSource(LL_RCC_PLLSOURCE_HSE);
 	} else if (IS_ENABLED(STM32_PLL_SRC_HSI)) {
 		/* Main PLL configuration and activation */
-		LL_RCC_PLL_SetSource(LL_RCC_PLLSOURCE_HSI);
+		LL_RCC_PLL_SetMainSource(LL_RCC_PLLSOURCE_HSI);
 	} else {
 		return -ENOTSUP;
 	}
@@ -503,7 +500,7 @@ static int set_up_plls(void)
 
 #else
 	/* Init PLL source to HSI */
-	LL_RCC_PLL_SetSource(LL_RCC_PLLSOURCE_HSI);
+	LL_RCC_PLL_SetMainSource(LL_RCC_PLLSOURCE_HSI);
 
 #endif /* STM32_PLL_ENABLED || STM32_PLLI2S_ENABLED || STM32_PLLSAI_ENABLED */
 
