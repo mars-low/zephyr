@@ -60,58 +60,11 @@
 #define SYSCLKSRC_FREQ	STM32_HSE_FREQ
 #endif
 
-/* ARM Sys CPU Clock before HPRE prescaler */
+/* ARM Sys CPU Clock */
 #define SYSCLK_FREQ	SYSCLKSRC_FREQ
 #define AHB_FREQ	((SYSCLK_FREQ)/(STM32_AHB_PRESCALER))
 #define APB1_FREQ	((AHB_FREQ)/(STM32_APB1_PRESCALER))
 #define APB2_FREQ	((AHB_FREQ)/(STM32_APB2_PRESCALER))
-
-/* Datasheet maximum frequency definitions */
-#if defined(CONFIG_SOC_STM32H743XX) ||\
-	defined(CONFIG_SOC_STM32H745XX) ||\
-	defined(CONFIG_SOC_STM32H747XX) ||\
-	defined(CONFIG_SOC_STM32H750XX) ||\
-	defined(CONFIG_SOC_STM32H753XX)
-/* All h7 SoC with maximum 480MHz SYSCLK */
-#define SYSCLK_FREQ_MAX		480000000UL
-#define AHB_FREQ_MAX		240000000UL
-#define APBx_FREQ_MAX		120000000UL
-#elif defined(CONFIG_SOC_STM32H723XX) ||\
-	  defined(CONFIG_SOC_STM32H725XX) ||\
-	  defined(CONFIG_SOC_STM32H730XX) ||\
-	  defined(CONFIG_SOC_STM32H735XX)
-/* All h7 SoC with maximum 550MHz SYSCLK */
-#define SYSCLK_FREQ_MAX		550000000UL
-#define AHB_FREQ_MAX		275000000UL
-#define APBx_FREQ_MAX		137500000UL
-#elif defined(CONFIG_SOC_STM32H7A3XX) || defined(CONFIG_SOC_STM32H7A3XXQ) ||\
-	  defined(CONFIG_SOC_STM32H7B3XX) || defined(CONFIG_SOC_STM32H7B3XXQ)
-#define SYSCLK_FREQ_MAX		280000000UL
-#define AHB_FREQ_MAX		280000000UL
-#define APBx_FREQ_MAX		140000000UL
-#else
-/* Default: All h7 SoC with maximum 280MHz SYSCLK */
-#define SYSCLK_FREQ_MAX		280000000UL
-#define AHB_FREQ_MAX		140000000UL
-#define APBx_FREQ_MAX		70000000UL
-#endif
-
-#if SYSCLK_FREQ > SYSCLK_FREQ_MAX
-#error "SYSCLK frequency is too high!"
-#endif
-#if AHB_FREQ > AHB_FREQ_MAX
-#error "AHB frequency is too high!"
-#endif
-#if APB1_FREQ > APBx_FREQ_MAX
-#error "APB1 frequency is too high!"
-#endif
-#if APB2_FREQ > APBx_FREQ_MAX
-#error "APB2 frequency is too high!"
-#endif
-
-#if SYSCLK_FREQ != CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC
-#error "SYS clock frequency for M7 core doesn't match CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC"
-#endif
 
 /* end of clock feasability check */
 
@@ -707,13 +660,7 @@ static int stm32_clock_control_init(const struct device *dev)
 	int r;
 
 	ARG_UNUSED(dev);
-
-	/* HW semaphore Clock enable */
-#if defined(CONFIG_SOC_STM32H7A3XX) || defined(CONFIG_SOC_STM32H7A3XXQ) || \
-	defined(CONFIG_SOC_STM32H7B3XX) || defined(CONFIG_SOC_STM32H7B3XXQ)
-	LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_HSEM);
-#endif
-
+	
 	z_stm32_hsem_lock(CFG_HW_RCC_SEMID, HSEM_LOCK_DEFAULT_RETRY);
 
 	/* Set up indiviual enabled clocks */
