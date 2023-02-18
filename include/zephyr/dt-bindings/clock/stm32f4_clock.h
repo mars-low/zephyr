@@ -26,11 +26,19 @@
 #define STM32_SRC_PLL_P	0x001
 #define STM32_SRC_PLL_Q	0x002
 #define STM32_SRC_PLL_R	0x003
+#define STM32_SRC_PLLI2S_R	0x004
+#define STM32_SRC_PLLI2S_P	0x005
+#define STM32_SRC_PLLI2S_Q	0x006
+#define STM32_SRC_PLLSAI_P	0x007
+#define STM32_SRC_PLLSAI_Q	0x008
+#define STM32_SRC_PLLSAI_R	0x009
 /** Fixed clocks */
-#define STM32_SRC_LSE	0x004
-#define STM32_SRC_LSI	0x005
+#define STM32_SRC_LSE	0x00A
+#define STM32_SRC_LSI	0x00B
+#define STM32_SRC_HSE	0x00C
+#define STM32_SRC_HSI	0x00D
 /** System clock */
-#define STM32_SRC_SYSCLK 0x006
+#define STM32_SRC_SYSCLK 0x010
 
 /**
  * @brief STM32 clock configuration bit field.
@@ -64,7 +72,16 @@
 /** @brief RCC_BDCR register offset */
 #define BDCR_REG		0x70
 
-/** @brief Device domain clocks selection helpers */
+/** @brief Clock selection register offset */
+#define PLLI2SCFGR_REG	0x84
+#define PLLSAICFGR_REG	0x88
+#define DCKCFGR_REG		0x8C
+
+/** @brief Device domain clocks selection helpers (RM0386.pdf) */
+/** DCKCFGR_REG devices */
+#define MSEL48(val)			STM32_CLOCK(val, 1, 27, DCKCFGR_REG)
+#define SDMMC_SEL(val)		STM32_CLOCK(val, 1, 28, DCKCFGR_REG)
+#define DSI_SEL(val)		STM32_CLOCK(val, 1, 29, DCKCFGR_REG)
 /** BDCR devices */
 #define RTC_SEL(val)		STM32_CLOCK(val, 3, 8, BDCR_REG)
 
