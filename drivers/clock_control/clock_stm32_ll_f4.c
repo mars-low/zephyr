@@ -55,7 +55,6 @@
 				STM32_PLL_N_MULTIPLIER,\
 				STM32_PLL_P_DIVISOR)
 
-/* SYSCLKSRC before the D1CPRE prescaler */
 #if defined(STM32_SYSCLK_SRC_PLL)
 #define SYSCLKSRC_FREQ	PLLP_VALUE
 #elif defined(STM32_SYSCLK_SRC_HSI)
@@ -65,7 +64,7 @@
 #endif
 
 /* ARM Sys CPU Clock before HPRE prescaler */
-#define SYSCLK_FREQ	((SYSCLKSRC_FREQ)/(STM32_D1CPRE))
+#define SYSCLK_FREQ	SYSCLKSRC_FREQ
 #define AHB_FREQ	((SYSCLK_FREQ)/(STM32_AHB_PRESCALER))
 #define APB1_FREQ	((AHB_FREQ)/(STM32_APB1_PRESCALER))
 #define APB2_FREQ	((AHB_FREQ)/(STM32_APB2_PRESCALER))
@@ -118,19 +117,6 @@
 #endif
 
 /* end of clock feasability check */
-#endif /* CONFIG_CPU_CORTEX_M7 */
-
-
-#if defined(CONFIG_CPU_CORTEX_M7)
-#if STM32_D1CPRE > 1
-/*
- * D1CPRE prescaler allows to set a HCLK frequency lower than SYSCLK frequency.
- * Though, zephyr doesn't make a difference today between these two clocks.
- * So, changing this prescaler is not allowed until it is made possible to
- * use them independently in zephyr clock subsystem.
- */
-#error "D1CPRE presacler can't be higher than 1"
-#endif
 #endif /* CONFIG_CPU_CORTEX_M7 */
 
 #if defined(CONFIG_CPU_CORTEX_M7)
@@ -767,8 +753,7 @@ static int stm32_clock_control_init(const struct device *dev)
 
 	/* Preset the prescalers prior to chosing SYSCLK */
 	/* Prevents APB clock to go over limits */
-	/* Set buses (Sys,AHB, APB1, APB2) prescalers */
-	LL_RCC_SetSysPrescaler(sysclk_prescaler(STM32_D1CPRE));
+	/* Set buses (AHB, APB1, APB2) prescalers */
 	LL_RCC_SetAHBPrescaler(ahb_prescaler(STM32_AHB_PRESCALER));
 	LL_RCC_SetAPB1Prescaler(apb1_prescaler(STM32_APB1_PRESCALER));
 	LL_RCC_SetAPB2Prescaler(apb2_prescaler(STM32_APB2_PRESCALER));
