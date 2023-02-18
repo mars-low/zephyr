@@ -80,10 +80,20 @@
 };
 
 &pll {
-	div-m = <8>;
-	mul-n = <336>;
+	div-m = <4>;
+	mul-n = <180>;
 	div-p = <2>;
-	div-q = <7>;
+	div-q = <6>;
+	clocks = <&clk_hse>;
+	status = "okay";
+};
+
+&pllsai {
+	div-m = <4>;
+	mul-n = <144>;
+	div-p = <6>;
+	div-q = <2>;
+	div-r = <2>;
 	clocks = <&clk_hse>;
 	status = "okay";
 };

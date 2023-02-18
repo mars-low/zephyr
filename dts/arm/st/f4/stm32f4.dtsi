@@ -65,9 +65,24 @@
 			status = "disabled";
 		};
 
-		pll: pll {
+		pll: pll@0 {
 			#clock-cells = <0>;
 			compatible = "st,stm32f4-pll-clock";
+			reg = <0>;
+			status = "disabled";
+		};
+
+		plli2s: pll@1 {
+			#clock-cells = <0>;
+			compatible = "st,stm32f4-pll-clock";
+			reg = <1>;
+			status = "disabled";
+		};
+
+		pllsai: pll@2 {
+			#clock-cells = <0>;
+			compatible = "st,stm32f4-pll-clock";
+			reg = <2>;
 			status = "disabled";
 		};
 	};

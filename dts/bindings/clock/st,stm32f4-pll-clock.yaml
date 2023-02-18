@@ -34,30 +34,32 @@ properties:
     type: int
     required: true
     description: |
-        Division factor for the PLL input clock
-        Valid range: 2 - 63
+        Division factor for PLLx
+        input clock
+        Valid range: 1 - 63
 
   mul-n:
     type: int
     required: true
     description: |
-        Main PLL multiplication factor for VCO
-        Valid range: 50 - 432
+        Main PLL multiplication factor for VCOx
+        Valid range: 4 - 512
 
   div-p:
     type: int
-    required: true
     description: |
-        Main PLL division factor for PLLSAI2CLK
-    enum:
-      - 2
-      - 4
-      - 6
-      - 8
+        PLL division factor for pllx_p_ck
+        Valid range: 1 - 128
 
   div-q:
     type: int
     description: |
-        Main PLL (PLL) division factor for USB OTG FS, SDMMC and random number
-        generator clocks.
-        Valid range: 2 - 15
+        PLL division factor for pllx_q_ck
+        Valid range: 1 - 128
+
+  div-r:
+    type: int
+    description: |
+        PLL division factor for pllx_r_ck
+        Valid range: 1 - 128
+

@@ -126,108 +126,6 @@ static uint32_t get_hclk_frequency(void)
 	return get_bus_clock(sysclk, STM32_AHB_PRESCALER);
 }
 
-#if !defined(CONFIG_CPU_CORTEX_M4)
-
-static int32_t prepare_regulator_voltage_scale(void)
-{
-	/* Apply system power supply configuration */
-#if defined(SMPS) && defined(CONFIG_POWER_SUPPLY_DIRECT_SMPS)
-	LL_PWR_ConfigSupply(LL_PWR_DIRECT_SMPS_SUPPLY);
-#elif defined(SMPS) && defined(CONFIG_POWER_SUPPLY_SMPS_1V8_SUPPLIES_LDO)
-	LL_PWR_ConfigSupply(LL_PWR_SMPS_1V8_SUPPLIES_LDO);
-#elif defined(SMPS) && defined(CONFIG_POWER_SUPPLY_SMPS_2V5_SUPPLIES_LDO)
-	LL_PWR_ConfigSupply(LL_PWR_SMPS_2V5_SUPPLIES_LDO);
-#elif defined(SMPS) && defined(CONFIG_POWER_SUPPLY_SMPS_1V8_SUPPLIES_EXT_AND_LDO)
-	LL_PWR_ConfigSupply(LL_PWR_SMPS_1V8_SUPPLIES_EXT_AND_LDO);
-#elif defined(SMPS) && defined(CONFIG_POWER_SUPPLY_SMPS_2V5_SUPPLIES_EXT_AND_LDO)
-	LL_PWR_ConfigSupply(LL_PWR_SMPS_2V5_SUPPLIES_EXT_AND_LDO);
-#elif defined(SMPS) && defined(CONFIG_POWER_SUPPLY_SMPS_1V8_SUPPLIES_EXT)
-	LL_PWR_ConfigSupply(LL_PWR_SMPS_1V8_SUPPLIES_EXT);
-#elif defined(SMPS) && defined(CONFIG_POWER_SUPPLY_SMPS_2V5_SUPPLIES_EXT)
-	LL_PWR_ConfigSupply(LL_PWR_SMPS_2V5_SUPPLIES_EXT);
-#elif defined(CONFIG_POWER_SUPPLY_EXTERNAL_SOURCE)
-	LL_PWR_ConfigSupply(LL_PWR_EXTERNAL_SOURCE_SUPPLY);
-#else
-	LL_PWR_ConfigSupply(LL_PWR_LDO_SUPPLY);
-#endif
-
-	/* Make sure to put the CPU in highest Voltage scale during clock configuration */
-	/* Highest voltage is SCALE0 */
-	LL_PWR_SetRegulVoltageScaling(LL_PWR_REGU_VOLTAGE_SCALE0);
-	while (LL_PWR_IsActiveFlag_VOS() == 0) {
-	}
-	return 0;
-}
-
-static int32_t optimize_regulator_voltage_scale(uint32_t sysclk_freq)
-{
-
-	/* After sysclock is configured, tweak the voltage scale down */
-	/* to reduce power consumption */
-
-	/* Needs some smart work to configure properly */
-	/* LL_PWR_REGULATOR_SCALE3 is lowest power consumption */
-	/* Must be done in accordance to the Maximum allowed frequency vs VOS*/
-	/* See RM0433 page 352 for more details */
-#if defined(SMPS) && defined(CONFIG_POWER_SUPPLY_DIRECT_SMPS)
-	LL_PWR_ConfigSupply(LL_PWR_DIRECT_SMPS_SUPPLY);
-#elif defined(SMPS) && defined(CONFIG_POWER_SUPPLY_SMPS_1V8_SUPPLIES_LDO)
-	LL_PWR_ConfigSupply(LL_PWR_SMPS_1V8_SUPPLIES_LDO);
-#elif defined(SMPS) && defined(CONFIG_POWER_SUPPLY_SMPS_2V5_SUPPLIES_LDO)
-	LL_PWR_ConfigSupply(LL_PWR_SMPS_2V5_SUPPLIES_LDO);
-#elif defined(SMPS) && defined(CONFIG_POWER_SUPPLY_SMPS_1V8_SUPPLIES_EXT_AND_LDO)
-	LL_PWR_ConfigSupply(LL_PWR_SMPS_1V8_SUPPLIES_EXT_AND_LDO);
-#elif defined(SMPS) && defined(CONFIG_POWER_SUPPLY_SMPS_2V5_SUPPLIES_EXT_AND_LDO)
-	LL_PWR_ConfigSupply(LL_PWR_SMPS_2V5_SUPPLIES_EXT_AND_LDO);
-#elif defined(SMPS) && defined(CONFIG_POWER_SUPPLY_SMPS_1V8_SUPPLIES_EXT)
-	LL_PWR_ConfigSupply(LL_PWR_SMPS_1V8_SUPPLIES_EXT);
-#elif defined(SMPS) && defined(CONFIG_POWER_SUPPLY_SMPS_2V5_SUPPLIES_EXT)
-	LL_PWR_ConfigSupply(LL_PWR_SMPS_2V5_SUPPLIES_EXT);
-#elif defined(CONFIG_POWER_SUPPLY_EXTERNAL_SOURCE)
-	LL_PWR_ConfigSupply(LL_PWR_EXTERNAL_SOURCE_SUPPLY);
-#else
-	LL_PWR_ConfigSupply(LL_PWR_LDO_SUPPLY);
-#endif
-	LL_PWR_SetRegulVoltageScaling(LL_PWR_REGU_VOLTAGE_SCALE0);
-	while (LL_PWR_IsActiveFlag_VOS() == 0) {
-	}
-	return 0;
-}
-
-__unused
-static int get_vco_input_range(uint32_t m_div, uint32_t *range)
-{
-	uint32_t vco_freq;
-
-	vco_freq = PLLSRC_FREQ / m_div;
-
-	if (MHZ(1) <= vco_freq && vco_freq <= MHZ(2)) {
-		*range = LL_RCC_PLLINPUTRANGE_1_2;
-	} else if (MHZ(2) < vco_freq && vco_freq <= MHZ(4)) {
-		*range = LL_RCC_PLLINPUTRANGE_2_4;
-	} else if (MHZ(4) < vco_freq && vco_freq <= MHZ(8)) {
-		*range = LL_RCC_PLLINPUTRANGE_4_8;
-	} else if (MHZ(8) < vco_freq && vco_freq <= MHZ(16)) {
-		*range = LL_RCC_PLLINPUTRANGE_8_16;
-	} else {
-		return -ERANGE;
-	}
-
-	return 0;
-}
-
-__unused
-static uint32_t get_vco_output_range(uint32_t vco_input_range)
-{
-	if (vco_input_range == LL_RCC_PLLINPUTRANGE_1_2) {
-		return LL_RCC_PLLVCORANGE_MEDIUM;
-	}
-
-	return LL_RCC_PLLVCORANGE_WIDE;
-}
-
-#endif /* ! CONFIG_CPU_CORTEX_M4 */
-
 /** @brief Verifies clock is part of actve clock configuration */
 static int enabled_clock(uint32_t src_clk)
 {
@@ -508,10 +406,6 @@ __unused
 static int set_up_plls(void)
 {
 #if defined(STM32_PLL_ENABLED) || defined(STM32_PLLI2S_ENABLED) || defined(STM32_PLLSAI_ENABLED)
-	int r;
-	uint32_t vco_input_range;
-	uint32_t vco_output_range;
-
 	/* Configure PLL source */
 
 	/* Can be HSE , HSI 64Mhz/HSIDIV*/
@@ -526,18 +420,7 @@ static int set_up_plls(void)
 	}
 
 #if defined(STM32_PLL_ENABLED)
-	r = get_vco_input_range(STM32_PLL_M_DIVISOR, &vco_input_range);
-	if (r < 0) {
-		return r;
-	}
-
-	vco_output_range = get_vco_output_range(vco_input_range);
-
 	LL_RCC_PLL_SetM(STM32_PLL_M_DIVISOR);
-
-	LL_RCC_PLL_SetVCOInputRange(vco_input_range);
-	LL_RCC_PLL_SetVCOOutputRange(vco_output_range);
-
 	LL_RCC_PLL_SetN(STM32_PLL_N_MULTIPLIER);
 
 	/* FRACN disable DIVP,DIVQ,DIVR enable*/
@@ -565,18 +448,7 @@ static int set_up_plls(void)
 #endif /* STM32_PLL_ENABLED */
 
 #if defined(STM32_PLLI2S_ENABLED)
-	r = get_vco_input_range(STM32_PLLI2S_M_DIVISOR, &vco_input_range);
-	if (r < 0) {
-		return r;
-	}
-
-	vco_output_range = get_vco_output_range(vco_input_range);
-
 	LL_RCC_PLLI2S_SetM(STM32_PLLI2S_M_DIVISOR);
-
-	LL_RCC_PLLI2S_SetVCOInputRange(vco_input_range);
-	LL_RCC_PLLI2S_SetVCOOutputRange(vco_output_range);
-
 	LL_RCC_PLLI2S_SetN(STM32_PLLI2S_N_MULTIPLIER);
 
 	LL_RCC_PLLI2SFRACN_Disable();
@@ -603,18 +475,7 @@ static int set_up_plls(void)
 #endif /* STM32_PLLI2S_ENABLED */
 
 #if defined(STM32_PLLSAI_ENABLED)
-	r = get_vco_input_range(STM32_PLLSAI_M_DIVISOR, &vco_input_range);
-	if (r < 0) {
-		return r;
-	}
-
-	vco_output_range = get_vco_output_range(vco_input_range);
-
 	LL_RCC_PLLSAI_SetM(STM32_PLLSAI_M_DIVISOR);
-
-	LL_RCC_PLLSAI_SetVCOInputRange(vco_input_range);
-	LL_RCC_PLLSAI_SetVCOOutputRange(vco_output_range);
-
 	LL_RCC_PLLSAI_SetN(STM32_PLLSAI_N_MULTIPLIER);
 
 	LL_RCC_PLLSAIFRACN_Disable();
@@ -668,9 +529,6 @@ static int stm32_clock_control_init(const struct device *dev)
 		return r;
 	}
 
-	/* Configure Voltage scale to comply with the desired system frequency */
-	prepare_regulator_voltage_scale();
-
 	/* Current hclk value */
 	old_hclk_freq = get_hclk_frequency();
 	/* AHB is HCLK clock to configure */
@@ -719,8 +577,6 @@ static int stm32_clock_control_init(const struct device *dev)
 	if (new_hclk_freq <= old_hclk_freq) {
 		LL_SetFlashLatency(new_hclk_freq);
 	}
-
-	optimize_regulator_voltage_scale(CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC);
 
 	z_stm32_hsem_unlock(CFG_HW_RCC_SEMID);
 
