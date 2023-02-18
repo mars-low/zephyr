@@ -33,9 +33,6 @@
 #define z_apb2_prescaler(v) LL_RCC_APB2_DIV_ ## v
 #define apb2_prescaler(v) z_apb2_prescaler(v)
 
-#define z_apb4_prescaler(v) LL_RCC_APB4_DIV_ ## v
-#define apb4_prescaler(v) z_apb4_prescaler(v)
-
 /* Macro to check for clock feasibility */
 /* It is Cortex M7's responsibility to setup clock tree */
 /* This check should only be performed for the M7 core code */
@@ -79,7 +76,6 @@
 #define AHB_FREQ	((SYSCLK_FREQ)/(STM32_HPRE))
 #define APB1_FREQ	((AHB_FREQ)/(STM32_D2PPRE1))
 #define APB2_FREQ	((AHB_FREQ)/(STM32_D2PPRE2))
-#define APB4_FREQ	((AHB_FREQ)/(STM32_D3PPRE))
 
 /* Datasheet maximum frequency definitions */
 #if defined(CONFIG_SOC_STM32H743XX) ||\
@@ -122,9 +118,6 @@
 #endif
 #if APB2_FREQ > APBx_FREQ_MAX
 #error "APB2 frequency is too high!"
-#endif
-#if APB4_FREQ > APBx_FREQ_MAX
-#error "APB4 frequency is too high!"
 #endif
 
 #if SYSCLK_FREQ != CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC
@@ -431,7 +424,6 @@ static int stm32_clock_control_get_subsys_rate(const struct device *clock,
 #endif
 	uint32_t apb1_clock = get_bus_clock(ahb_clock, STM32_D2PPRE1);
 	uint32_t apb2_clock = get_bus_clock(ahb_clock, STM32_D2PPRE2);
-	uint32_t apb4_clock = get_bus_clock(ahb_clock, STM32_D3PPRE);
 
 	ARG_UNUSED(clock);
 
@@ -448,9 +440,6 @@ static int stm32_clock_control_get_subsys_rate(const struct device *clock,
 		break;
 	case STM32_CLOCK_BUS_APB2:
 		*rate = apb2_clock;
-		break;
-	case STM32_CLOCK_BUS_APB4:
-		*rate = apb4_clock;
 		break;
 	case STM32_SRC_SYSCLK:
 		*rate = get_hclk_frequency();
@@ -813,12 +802,11 @@ static int stm32_clock_control_init(const struct device *dev)
 
 	/* Preset the prescalers prior to chosing SYSCLK */
 	/* Prevents APB clock to go over limits */
-	/* Set buses (Sys,AHB, APB1, APB2 & APB4) prescalers */
+	/* Set buses (Sys,AHB, APB1, APB2) prescalers */
 	LL_RCC_SetSysPrescaler(sysclk_prescaler(STM32_D1CPRE));
 	LL_RCC_SetAHBPrescaler(ahb_prescaler(STM32_HPRE));
 	LL_RCC_SetAPB1Prescaler(apb1_prescaler(STM32_D2PPRE1));
 	LL_RCC_SetAPB2Prescaler(apb2_prescaler(STM32_D2PPRE2));
-	LL_RCC_SetAPB4Prescaler(apb4_prescaler(STM32_D3PPRE));
 
 	/* Set up sys clock */
 	if (IS_ENABLED(STM32_SYSCLK_SRC_PLL)) {
