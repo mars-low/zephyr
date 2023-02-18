@@ -332,11 +332,7 @@ static int stm32_clock_control_get_subsys_rate(const struct device *clock,
 	 * since it will be updated after clock configuration and hence
 	 * more likely to contain actual clock speed
 	 */
-#if defined(CONFIG_CPU_CORTEX_M4)
-	uint32_t ahb_clock = SystemCoreClock;
-#else
 	uint32_t ahb_clock = get_bus_clock(SystemCoreClock, STM32_AHB_PRESCALER);
-#endif
 	uint32_t apb1_clock = get_bus_clock(ahb_clock, STM32_APB1_PRESCALER);
 	uint32_t apb2_clock = get_bus_clock(ahb_clock, STM32_APB2_PRESCALER);
 
@@ -660,7 +656,7 @@ static int stm32_clock_control_init(const struct device *dev)
 	int r;
 
 	ARG_UNUSED(dev);
-	
+
 	z_stm32_hsem_lock(CFG_HW_RCC_SEMID, HSEM_LOCK_DEFAULT_RETRY);
 
 	/* Set up indiviual enabled clocks */
