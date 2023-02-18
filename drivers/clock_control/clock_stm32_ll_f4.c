@@ -163,12 +163,11 @@ static uint32_t get_pllout_frequency(uint32_t pllsrc_freq,
 __unused
 static uint32_t get_pllsrc_frequency(void)
 {
-	switch (LL_RCC_PLL_GetSource()) {
+	switch (LL_RCC_PLL_GetMainSource()) {
 	case LL_RCC_PLLSOURCE_HSI:
 		return STM32_HSI_FREQ;
 	case LL_RCC_PLLSOURCE_HSE:
 		return STM32_HSE_FREQ;
-	case LL_RCC_PLLSOURCE_NONE:
 	default:
 		return 0;
 	}
@@ -421,9 +420,6 @@ static int stm32_clock_control_get_subsys_rate(const struct device *clock,
 	case STM32_CLOCK_BUS_AHB1:
 	case STM32_CLOCK_BUS_AHB2:
 	case STM32_CLOCK_BUS_AHB3:
-	case STM32_CLOCK_BUS_AHB4:
-		*rate = ahb_clock;
-		break;
 	case STM32_CLOCK_BUS_APB1:
 	case STM32_CLOCK_BUS_APB1_2:
 		*rate = apb1_clock;
@@ -728,8 +724,8 @@ static int set_up_plls(void)
 #endif /* STM32_PLLSAI_ENABLED */
 
 #else
-	/* Init PLL source to None */
-	LL_RCC_PLL_SetSource(LL_RCC_PLLSOURCE_NONE);
+	/* Init PLL source to HSI */
+	LL_RCC_PLL_SetSource(LL_RCC_PLLSOURCE_HSI);
 
 #endif /* STM32_PLL_ENABLED || STM32_PLLI2S_ENABLED || STM32_PLLSAI_ENABLED */
 
@@ -749,8 +745,6 @@ static int stm32_clock_control_init(const struct device *dev)
 #if defined(CONFIG_SOC_STM32H7A3XX) || defined(CONFIG_SOC_STM32H7A3XXQ) || \
 	defined(CONFIG_SOC_STM32H7B3XX) || defined(CONFIG_SOC_STM32H7B3XXQ)
 	LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_HSEM);
-#else
-	LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_HSEM);
 #endif
 
 	z_stm32_hsem_lock(CFG_HW_RCC_SEMID, HSEM_LOCK_DEFAULT_RETRY);
