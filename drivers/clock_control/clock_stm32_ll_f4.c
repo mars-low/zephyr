@@ -555,7 +555,10 @@ static void set_up_fixed_clock_sources(void)
 		LL_PWR_EnableBkUpAccess();
 
 		/* Configure driving capability */
-		LL_RCC_LSE_SetDriveCapability(STM32_LSE_DRIVING << RCC_BDCR_LSEDRV_Pos);
+#if STM32_LSE_DRIVING
+		/* Configure driving capability */
+		LL_RCC_LSE_EnableHighDriveMode();
+#endif
 
 		if (IS_ENABLED(STM32_LSE_BYPASS)) {
 			/* Configure LSE bypass */
