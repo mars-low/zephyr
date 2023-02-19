@@ -16,7 +16,6 @@
 #include <zephyr/drivers/clock_control/stm32_clock_control.h>
 #include "stm32_hsem.h"
 
-
 /* Macros to fill up prescaler values */
 #define z_ahb_prescaler(v) LL_RCC_SYSCLK_DIV_ ## v
 #define ahb_prescaler(v) z_ahb_prescaler(v)
@@ -26,6 +25,19 @@
 
 #define z_apb2_prescaler(v) LL_RCC_APB2_DIV_ ## v
 #define apb2_prescaler(v) z_apb2_prescaler(v)
+
+/* Macros to fill up multiplication and division factors values */
+#define z_pllm(v) LL_RCC_PLLM_DIV_ ## v
+#define pllm(v) z_pllm(v)
+
+#define z_pllp(v) LL_RCC_PLLP_DIV_ ## v
+#define pllp(v) z_pllp(v)
+
+#define z_pllq(v) LL_RCC_PLLQ_DIV_ ## v
+#define pllq(v) z_pllq(v)
+
+#define z_pllr(v) LL_RCC_PLLR_DIV_ ## v
+#define pllr(v) z_pllr(v)
 
 /* Macros to check for clock feasibility */
 
@@ -79,6 +91,19 @@ static uint32_t get_pllout_frequency(uint32_t pllsrc_freq,
 	__ASSERT_NO_MSG(pllm_div && pllout_div);
 
 	return (pllsrc_freq / pllm_div) * plln_mul / pllout_div;
+}
+
+__unused
+static uint32_t get_pll_source(void)
+{
+	if (IS_ENABLED(STM32_PLL_SRC_HSI)) {
+		return LL_RCC_PLLSOURCE_HSI;
+	} else if (IS_ENABLED(STM32_PLL_SRC_HSE)) {
+		return LL_RCC_PLLSOURCE_HSE;
+	}
+
+	__ASSERT(0, "Invalid source");
+	return 0;
 }
 
 __unused
@@ -361,9 +386,13 @@ static void set_up_fixed_clock_sources(void)
 	}
 
 	if (IS_ENABLED(STM32_HSI_ENABLED)) {
-		/* Enable HSI oscillator */
-		LL_RCC_HSI_Enable();
-		while (LL_RCC_HSI_IsReady() != 1) {
+		/* Enable HSI if not enabled */
+		if (LL_RCC_HSI_IsReady() != 1) {
+			/* Enable HSI */
+			LL_RCC_HSI_Enable();
+			while (LL_RCC_HSI_IsReady() != 1) {
+			/* Wait for HSI ready */
+			}
 		}
 	}
 
@@ -402,51 +431,53 @@ static void set_up_fixed_clock_sources(void)
 	}
 }
 
+
+/*
+ * Unconditionally switch the system clock source to HSI.
+ */
+__unused
+static void stm32_clock_switch_to_hsi(void)
+{
+	/* Enable HSI if not enabled */
+	if (LL_RCC_HSI_IsReady() != 1) {
+		/* Enable HSI */
+		LL_RCC_HSI_Enable();
+		while (LL_RCC_HSI_IsReady() != 1) {
+		/* Wait for HSI ready */
+		}
+	}
+
+	/* Set HSI as SYSCLCK source */
+	LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_HSI);
+	while (LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_HSI) {
+	}
+}
+
 __unused
 static int set_up_plls(void)
 {
+#if defined(STM32_PLL_ENABLED)
+	/*
+	 * Case of chain-loaded applications:
+	 * Switch to HSI and disable the PLL before configuration.
+	 * (Switching to HSI makes sure we have a SYSCLK source in
+	 * case we're currently running from the PLL we're about to
+	 * turn off and reconfigure.)
+	 *
+	 */
+	if (LL_RCC_GetSysClkSource() == LL_RCC_SYS_CLKSOURCE_STATUS_PLL) {
+		LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
+		stm32_clock_switch_to_hsi();
+	}
+	LL_RCC_PLL_Disable();
+
+#endif
+
 #if defined(STM32_PLL_ENABLED) || defined(STM32_PLLI2S_ENABLED) || defined(STM32_PLLSAI_ENABLED)
 	/* Configure PLL source */
 
-	/* Can be HSE , HSI 64Mhz/HSIDIV*/
-	if (IS_ENABLED(STM32_PLL_SRC_HSE)) {
-		/* Main PLL configuration and activation */
-		LL_RCC_PLL_SetMainSource(LL_RCC_PLLSOURCE_HSE);
-	} else if (IS_ENABLED(STM32_PLL_SRC_HSI)) {
-		/* Main PLL configuration and activation */
-		LL_RCC_PLL_SetMainSource(LL_RCC_PLLSOURCE_HSI);
-	} else {
-		return -ENOTSUP;
-	}
-
-#if defined(STM32_PLL_ENABLED)
-	if (IS_ENABLED(STM32_PLL_P_ENABLED)) {
-		LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE,
-				    STM32_PLL_M_DIVISOR,
-				    STM32_PLL_N_MULTIPLIER,
-				    STM32_PLL_P_DIVISOR);
-	}
-
-	if (IS_ENABLED(STM32_PLL_Q_ENABLED)) {
-		LL_RCC_PLL_ConfigDomain_48M(LL_RCC_PLLSOURCE_HSE,
-				    STM32_PLL_M_DIVISOR,
-				    STM32_PLL_N_MULTIPLIER,
-				    STM32_PLL_Q_DIVISOR);
-	}
-
-	if (IS_ENABLED(STM32_PLL_R_ENABLED)) {
-		// Check if PLLR is supported / enabled before configuring domain
-		// LL_RCC_PLL_ConfigDomain_DSI(LL_RCC_PLLSOURCE_HSE,
-		// 		    STM32_PLL_M_DIVISOR,
-		// 		    STM32_PLL_N_MULTIPLIER,
-		// 		    STM32_PLL_R_DIVISOR);
-	}
-
-	LL_RCC_PLL_Enable();
-	while (LL_RCC_PLL_IsReady() != 1U) {
-	}
-
-#endif /* STM32_PLL_ENABLED */
+	/* Can be HSE or HSI*/
+	LL_RCC_PLL_SetMainSource(get_pll_source());
 
 #if defined(STM32_PLLI2S_ENABLED)
 	if (IS_ENABLED(STM32_PLLI2S_P_ENABLED)) {
@@ -454,7 +485,7 @@ static int set_up_plls(void)
 	}
 
 	if (IS_ENABLED(STM32_PLLI2S_Q_ENABLED)) {
-		LL_RCC_PLLI2S_ConfigDomain_SAI(LL_RCC_PLLSOURCE_HSE,
+		LL_RCC_PLLI2S_ConfigDomain_SAI(get_pll_source(),
 					       STM32_PLLI2S_M_DIVISOR,
 					       STM32_PLLI2S_N_MULTIPLIER,
 					       STM32_PLLI2S_Q_DIVISOR,
@@ -462,7 +493,7 @@ static int set_up_plls(void)
 	}
 
 	if (IS_ENABLED(STM32_PLLI2S_R_ENABLED)) {
-		LL_RCC_PLLI2S_ConfigDomain_I2S(LL_RCC_PLLSOURCE_HSE,
+		LL_RCC_PLLI2S_ConfigDomain_I2S(get_pll_source(),
 					       STM32_PLLI2S_M_DIVISOR,
 					       STM32_PLLI2S_N_MULTIPLIER,
 					       STM32_PLLI2S_R_DIVISOR);
@@ -476,14 +507,14 @@ static int set_up_plls(void)
 
 #if defined(STM32_PLLSAI_ENABLED)
 	if (IS_ENABLED(STM32_PLLSAI_P_ENABLED)) {
-		LL_RCC_PLLSAI_ConfigDomain_48M(LL_RCC_PLLSOURCE_HSE,
+		LL_RCC_PLLSAI_ConfigDomain_48M(get_pll_source(),
 					       STM32_PLLSAI_M_DIVISOR,
 					       STM32_PLLSAI_N_MULTIPLIER,
 					       STM32_PLLSAI_P_DIVISOR);
 	}
 
 	if (IS_ENABLED(STM32_PLLSAI_Q_ENABLED)) {
-		LL_RCC_PLLSAI_ConfigDomain_SAI(LL_RCC_PLLSOURCE_HSE,
+		LL_RCC_PLLSAI_ConfigDomain_SAI(get_pll_source(),
 					       STM32_PLLSAI_M_DIVISOR,
 					       STM32_PLLSAI_N_MULTIPLIER,
 					       STM32_PLLSAI_Q_DIVISOR,
@@ -491,7 +522,7 @@ static int set_up_plls(void)
 	}
 
 	if (IS_ENABLED(STM32_PLLSAI_R_ENABLED)) {
-		LL_RCC_PLLSAI_ConfigDomain_LTDC(LL_RCC_PLLSOURCE_HSE,
+		LL_RCC_PLLSAI_ConfigDomain_LTDC(get_pll_source(),
 					       STM32_PLLSAI_M_DIVISOR,
 					       STM32_PLLSAI_N_MULTIPLIER,
 					       STM32_PLLSAI_R_DIVISOR,
@@ -504,6 +535,35 @@ static int set_up_plls(void)
 
 #endif /* STM32_PLLSAI_ENABLED */
 
+#if defined(STM32_PLL_ENABLED)
+	if (IS_ENABLED(STM32_PLL_P_ENABLED)) {
+		LL_RCC_PLL_ConfigDomain_SYS(get_pll_source(),
+				    pllm(STM32_PLL_M_DIVISOR),
+				    STM32_PLL_N_MULTIPLIER,
+				    pllp(STM32_PLL_P_DIVISOR));
+	}
+
+	if (IS_ENABLED(STM32_PLL_Q_ENABLED)) {
+		LL_RCC_PLL_ConfigDomain_48M(get_pll_source(),
+				    pllm(STM32_PLL_M_DIVISOR),
+				    STM32_PLL_N_MULTIPLIER,
+				    pllq(STM32_PLL_Q_DIVISOR));
+	}
+
+	if (IS_ENABLED(STM32_PLL_R_ENABLED)) {
+		// Check if PLLR is supported / enabled before configuring domain
+		// LL_RCC_PLL_ConfigDomain_DSI(get_pll_source(),
+		// 		    STM32_PLL_M_DIVISOR,
+		// 		    STM32_PLL_N_MULTIPLIER,
+		// 		    STM32_PLL_R_DIVISOR);
+	}
+
+	LL_RCC_PLL_Enable();
+	while (LL_RCC_PLL_IsReady() != 1U) {
+	}
+
+#endif /* STM32_PLL_ENABLED */
+
 #else
 	/* Init PLL source to HSI */
 	LL_RCC_PLL_SetMainSource(LL_RCC_PLLSOURCE_HSI);
@@ -513,6 +573,16 @@ static int set_up_plls(void)
 	return 0;
 }
 
+/**
+ * @brief Activate default clocks
+ */
+__unused
+static void config_enable_default_clocks(void)
+{
+	/* Power Interface clock enabled by default */
+	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
+}
+
 static int stm32_clock_control_init(const struct device *dev)
 {
 	uint32_t old_hclk_freq = 0;
@@ -520,6 +590,9 @@ static int stm32_clock_control_init(const struct device *dev)
 	int r;
 
 	ARG_UNUSED(dev);
+
+	/* Some clocks would be activated by default */
+	config_enable_default_clocks();
 
 	z_stm32_hsem_lock(CFG_HW_RCC_SEMID, HSEM_LOCK_DEFAULT_RETRY);
 
