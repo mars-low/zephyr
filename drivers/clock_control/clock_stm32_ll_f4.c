@@ -77,10 +77,6 @@
 
 /* end of clock feasability check */
 
-static uint32_t get_bus_clock(uint32_t clock, uint32_t prescaler)
-{
-	return clock / prescaler;
-}
 
 __unused
 static uint32_t get_pllout_frequency(uint32_t pllsrc_freq,
@@ -93,6 +89,12 @@ static uint32_t get_pllout_frequency(uint32_t pllsrc_freq,
 	return (pllsrc_freq / pllm_div) * plln_mul / pllout_div;
 }
 
+static uint32_t get_bus_clock(uint32_t clock, uint32_t prescaler)
+{
+	return clock / prescaler;
+}
+
+#if defined(STM32_PLL_ENABLED)
 __unused
 static uint32_t get_pll_source(void)
 {
@@ -107,16 +109,39 @@ static uint32_t get_pll_source(void)
 }
 
 __unused
-static uint32_t get_pllsrc_frequency(void)
+uint32_t get_pllsrc_frequency(void)
 {
-	switch (LL_RCC_PLL_GetMainSource()) {
-	case LL_RCC_PLLSOURCE_HSI:
+	if (IS_ENABLED(STM32_PLL_SRC_HSI)) {
 		return STM32_HSI_FREQ;
-	case LL_RCC_PLLSOURCE_HSE:
+	} else if (IS_ENABLED(STM32_PLL_SRC_HSE)) {
 		return STM32_HSE_FREQ;
-	default:
-		return 0;
 	}
+
+	__ASSERT(0, "Invalid source");
+	return 0;
+}
+
+/**
+ * @brief Set up pll configuration
+ */
+__unused
+void config_pll_sysclock(void)
+{
+	LL_RCC_PLL_ConfigDomain_SYS(get_pll_source(),
+				    pllm(STM32_PLL_M_DIVISOR),
+				    STM32_PLL_N_MULTIPLIER,
+				    pllp(STM32_PLL_P_DIVISOR));
+}
+
+#endif /* defined(STM32_PLL_ENABLED) */
+
+/**
+ * @brief Activate default clocks
+ */
+void config_enable_default_clocks(void)
+{
+	/* Power Interface clock enabled by default */
+	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
 }
 
 __unused
@@ -146,6 +171,7 @@ static uint32_t get_hclk_frequency(void)
 }
 
 /** @brief Verifies clock is part of active clock configuration */
+__unused
 static int enabled_clock(uint32_t src_clk)
 {
 
@@ -181,11 +207,7 @@ static inline int stm32_clock_control_on(const struct device *dev,
 		return -ENOTSUP;
 	}
 
-	z_stm32_hsem_lock(CFG_HW_RCC_SEMID, HSEM_LOCK_DEFAULT_RETRY);
-
 	sys_set_bits(DT_REG_ADDR(DT_NODELABEL(rcc)) + pclken->bus, pclken->enr);
-
-	z_stm32_hsem_unlock(CFG_HW_RCC_SEMID);
 
 	return 0;
 }
@@ -202,11 +224,7 @@ static inline int stm32_clock_control_off(const struct device *dev,
 		return -ENOTSUP;
 	}
 
-	z_stm32_hsem_lock(CFG_HW_RCC_SEMID, HSEM_LOCK_DEFAULT_RETRY);
-
 	sys_clear_bits(DT_REG_ADDR(DT_NODELABEL(rcc)) + pclken->bus, pclken->enr);
-
-	z_stm32_hsem_unlock(CFG_HW_RCC_SEMID);
 
 	return 0;
 }
@@ -215,6 +233,8 @@ static inline int stm32_clock_control_configure(const struct device *dev,
 						clock_control_subsys_t sub_system,
 						void *data)
 {
+#if defined(STM32_SRC_SYSCLK)
+	/* At least one alt src clock available */
 	struct stm32_pclken *pclken = (struct stm32_pclken *)(sub_system);
 	int err;
 
@@ -223,18 +243,23 @@ static inline int stm32_clock_control_configure(const struct device *dev,
 
 	err = enabled_clock(pclken->bus);
 	if (err < 0) {
-		/* Attemp to configure a src clock not available or not valid */
+		/* Attempt to configure a src clock not available or not valid */
 		return err;
 	}
 
-	z_stm32_hsem_lock(CFG_HW_RCC_SEMID, HSEM_LOCK_DEFAULT_RETRY);
+	if (pclken->enr == NO_SEL) {
+		/* Domain clock is fixed. Nothing to set. Exit */
+		return 0;
+	}
 
 	sys_set_bits(DT_REG_ADDR(DT_NODELABEL(rcc)) + STM32_CLOCK_REG_GET(pclken->enr),
 		     STM32_CLOCK_VAL_GET(pclken->enr) << STM32_CLOCK_SHIFT_GET(pclken->enr));
 
-	z_stm32_hsem_unlock(CFG_HW_RCC_SEMID);
-
 	return 0;
+#else
+	/* No src clock available: Not supported */
+	return -ENOTSUP;
+#endif
 }
 
 static int stm32_clock_control_get_subsys_rate(const struct device *clock,
@@ -250,8 +275,12 @@ static int stm32_clock_control_get_subsys_rate(const struct device *clock,
 	 */
 	uint32_t ahb_clock = get_bus_clock(SystemCoreClock, STM32_AHB_PRESCALER);
 	uint32_t apb1_clock = get_bus_clock(ahb_clock, STM32_APB1_PRESCALER);
+#if DT_NODE_HAS_PROP(DT_NODELABEL(rcc), apb2_prescaler)
 	uint32_t apb2_clock = get_bus_clock(ahb_clock, STM32_APB2_PRESCALER);
-
+#elif defined(STM32_CLOCK_BUS_APB2)
+	/* APB2 bus exists, but w/o dedicated prescaler */
+	uint32_t apb2_clock = apb1_clock;
+#endif
 	ARG_UNUSED(clock);
 
 	switch (pclken->bus) {
@@ -537,10 +566,7 @@ static int set_up_plls(void)
 
 #if defined(STM32_PLL_ENABLED)
 	if (IS_ENABLED(STM32_PLL_P_ENABLED)) {
-		LL_RCC_PLL_ConfigDomain_SYS(get_pll_source(),
-				    pllm(STM32_PLL_M_DIVISOR),
-				    STM32_PLL_N_MULTIPLIER,
-				    pllp(STM32_PLL_P_DIVISOR));
+		config_pll_sysclock();
 	}
 
 	if (IS_ENABLED(STM32_PLL_Q_ENABLED)) {
@@ -571,16 +597,6 @@ static int set_up_plls(void)
 #endif /* STM32_PLL_ENABLED || STM32_PLLI2S_ENABLED || STM32_PLLSAI_ENABLED */
 
 	return 0;
-}
-
-/**
- * @brief Activate default clocks
- */
-__unused
-static void config_enable_default_clocks(void)
-{
-	/* Power Interface clock enabled by default */
-	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
 }
 
 static int stm32_clock_control_init(const struct device *dev)
