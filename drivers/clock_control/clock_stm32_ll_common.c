@@ -607,6 +607,32 @@ static void set_up_plls(void)
 	}
 #endif /* STM32_PLLSAI_ENABLED */
 
+#if defined(STM32_PLLI2S_ENABLED)
+	if (IS_ENABLED(STM32_PLLI2S_P_ENABLED)) {
+		// Check if PLLI2SP is supported / enabled before configuring domain
+	}
+
+	if (IS_ENABLED(STM32_PLLI2S_Q_ENABLED)) {
+		LL_RCC_PLLI2S_ConfigDomain_SAI(LL_RCC_PLLSOURCE_HSE,
+					       plli2sm(STM32_PLLI2S_M_DIVISOR),
+					       STM32_PLLI2S_N_MULTIPLIER,
+					       plli2sq(STM32_PLLI2S_Q_DIVISOR),
+						   plli2sdivq(1));
+	}
+
+	if (IS_ENABLED(STM32_PLLI2S_R_ENABLED)) {
+		LL_RCC_PLLI2S_ConfigDomain_I2S(LL_RCC_PLLSOURCE_HSE,
+					       plli2sm(STM32_PLLI2S_M_DIVISOR),
+					       STM32_PLLI2S_N_MULTIPLIER,
+					       plli2sr(STM32_PLLI2S_R_DIVISOR));
+	}
+
+	LL_RCC_PLLI2S_Enable();
+	while (LL_RCC_PLLI2S_IsReady() != 1U) {
+	}
+
+#endif /* STM32_PLLI2S_ENABLED */
+
 #if defined(STM32_PLL2_ENABLED)
 	/*
 	 * Disable PLL2 after switching to HSI for SysClk
