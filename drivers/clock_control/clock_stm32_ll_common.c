@@ -181,6 +181,48 @@ static int enabled_clock(uint32_t src_clk)
 		}
 		break;
 #endif /* STM32_SRC_PLL_R */
+#if defined(STM32_SRC_PLLI2S_P)
+	case STM32_SRC_PLLI2S_P:
+		if (!IS_ENABLED(STM32_PLLI2S_P_ENABLED)) {
+			r = -ENOTSUP;
+		}
+		break;
+#endif /* STM32_SRC_PLLI2S_P */
+#if defined(STM32_SRC_PLLI2S_Q)
+	case STM32_SRC_PLLI2S_Q:
+		if (!IS_ENABLED(STM32_PLLI2S_Q_ENABLED)) {
+			r = -ENOTSUP;
+		}
+		break;
+#endif /* STM32_SRC_PLLI2S_Q */
+#if defined(STM32_SRC_PLLI2S_R)
+	case STM32_SRC_PLLI2S_R:
+		if (!IS_ENABLED(STM32_PLLI2S_R_ENABLED)) {
+			r = -ENOTSUP;
+		}
+		break;
+#endif /* STM32_SRC_PLLI2S_R */
+#if defined(STM32_SRC_PLLSAI_P)
+	case STM32_SRC_PLLSAI_P:
+		if (!IS_ENABLED(STM32_PLLSAI_P_ENABLED)) {
+			r = -ENOTSUP;
+		}
+		break;
+#endif /* STM32_SRC_PLLSAI_P */
+#if defined(STM32_SRC_PLLSAI_Q)
+	case STM32_SRC_PLLSAI_Q:
+		if (!IS_ENABLED(STM32_PLLSAI_Q_ENABLED)) {
+			r = -ENOTSUP;
+		}
+		break;
+#endif /* STM32_SRC_PLLSAI_Q */
+#if defined(STM32_SRC_PLLSAI_R)
+	case STM32_SRC_PLLSAI_R:
+		if (!IS_ENABLED(STM32_PLLSAI_R_ENABLED)) {
+			r = -ENOTSUP;
+		}
+		break;
+#endif /* STM32_SRC_PLLSAI_R */
 	default:
 		return -ENOTSUP;
 	}
