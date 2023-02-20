@@ -69,6 +69,50 @@
 #define z_pllr(v) LL_RCC_PLLR_DIV_ ## v
 #define pllr(v) z_pllr(v)
 
+#if defined(STM32_PLLSAI_ENABLED)
+
+#define z_pllsaim(v) LL_RCC_PLLSAIM_DIV_ ## v
+#define pllsaim(v) z_pllsaim(v)
+
+#define z_pllsaip(v) LL_RCC_PLLSAIP_DIV_ ## v
+#define pllsaip(v) z_pllsaip(v)
+
+#define z_pllsaiq(v) LL_RCC_PLLSAIQ_DIV_ ## v
+#define pllsaiq(v) z_pllsaiq(v)
+
+#define z_pllsair(v) LL_RCC_PLLSAIR_DIV_ ## v
+#define pllsair(v) z_pllsair(v)
+
+#define z_pllsaidivq(v) LL_RCC_PLLSAIDIVQ_DIV_ ## v
+#define pllsaidivq(v) z_pllsaidivq(v)
+
+#define z_pllsaidivr(v) LL_RCC_PLLSAIDIVR_DIV_ ## v
+#define pllsaidivr(v) z_pllsaidivr(v)
+
+#endif
+
+#if defined(STM32_PLLI2S_ENABLED)
+
+#define z_plli2sm(v) LL_RCC_PLLI2SM_DIV_ ## v
+#define plli2sm(v) z_plli2sm(v)
+
+#define z_plli2sp(v) LL_RCC_PLLI2SP_DIV_ ## v
+#define plli2sp(v) z_plli2sp(v)
+
+#define z_plli2sq(v) LL_RCC_PLLI2SQ_DIV_ ## v
+#define plli2sq(v) z_plli2sq(v)
+
+#define z_plli2sr(v) LL_RCC_PLLI2SR_DIV_ ## v
+#define plli2sr(v) z_plli2sr(v)
+
+#define z_plli2sdivq(v) LL_RCC_PLLI2SDIVQ_DIV_ ## v
+#define plli2sdivq(v) z_plli2sdivq(v)
+
+#define z_plli2sdivr(v) LL_RCC_PLLI2SDIVR_DIV_ ## v
+#define plli2sdivr(v) z_plli2sdivr(v)
+
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

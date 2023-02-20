@@ -405,9 +405,66 @@ static int stm32_clock_control_get_subsys_rate(const struct device *clock,
 					      STM32_PLL_R_DIVISOR);
 		break;
 #endif
-/* PLLSAI1x not supported yet */
+/* PLLSAI1x partially supported */
+#if defined(STM32_SRC_PLLSAI_P) & STM32_PLLSAI_P_ENABLED
+	case STM32_SRC_PLLSAI_P:
+		*rate = get_pll_div_frequency(get_pllsrc_frequency(),
+					      STM32_PLLSAI_M_DIVISOR,
+					      STM32_PLLSAI_N_MULTIPLIER,
+					      STM32_PLLSAI_P_DIVISOR);
+		break;
+#endif
+#if defined(STM32_SRC_PLLSAI_Q) & STM32_PLLSAI_Q_ENABLED
+	case STM32_SRC_PLLSAI_Q:
+		*rate = get_pll_div_frequency(get_pllsrc_frequency(),
+					      STM32_PLLSAI_M_DIVISOR,
+					      STM32_PLLSAI_N_MULTIPLIER,
+					      STM32_PLLSAI_Q_DIVISOR);
+		break;
+#endif
+#if defined(STM32_SRC_PLLSAI_R) & STM32_PLLSAI_R_ENABLED
+	case STM32_SRC_PLLSAI_R:
+#if defined(STM32_SRC_PLLSAI_DIVR) & STM32_PLLSAI_DIVR_ENABLED
+	case STM32_SRC_PLLSAI_DIVR:
+#endif
+		*rate = get_pll_div_frequency(get_pllsrc_frequency(),
+					      STM32_PLLSAI_M_DIVISOR,
+					      STM32_PLLSAI_N_MULTIPLIER,
+					      STM32_PLLSAI_R_DIVISOR);
+#if defined(STM32_SRC_PLLSAI_DIVR) & STM32_PLLSAI_DIVR_ENABLED
+		if(pclken->bus == STM32_SRC_PLLSAI_DIVR)
+		{
+			*rate /= STM32_PLLSAI_DIVR_DIVISOR;
+		}
+#endif		
+		break;
+#endif
 /* PLLSAI2x not supported yet */
-/* PLLI2Sx not supported yet */
+/* PLLI2Sx partially supported */
+#if defined(STM32_SRC_PLLI2S_P) & STM32_PLLI2S_P_ENABLED
+	case STM32_SRC_PLLI2S_P:
+		*rate = get_pll_div_frequency(get_pllsrc_frequency(),
+					      STM32_PLLI2S_M_DIVISOR,
+					      STM32_PLLI2S_N_MULTIPLIER,
+					      STM32_PLLI2S_P_DIVISOR);
+		break;
+#endif
+#if defined(STM32_SRC_PLLI2S_Q) & STM32_PLLI2S_Q_ENABLED
+	case STM32_SRC_PLLI2S_Q:
+		*rate = get_pll_div_frequency(get_pllsrc_frequency(),
+					      STM32_PLLI2S_M_DIVISOR,
+					      STM32_PLLI2S_N_MULTIPLIER,
+					      STM32_PLLI2S_Q_DIVISOR);
+		break;
+#endif
+#if defined(STM32_SRC_PLLI2S_R) & STM32_PLLI2S_R_ENABLED
+	case STM32_SRC_PLLI2S_R:
+		*rate = get_pll_div_frequency(get_pllsrc_frequency(),
+					      STM32_PLLI2S_M_DIVISOR,
+					      STM32_PLLI2S_N_MULTIPLIER,
+					      STM32_PLLI2S_R_DIVISOR);
+		break;
+#endif
 #if defined(STM32_SRC_LSE)
 	case STM32_SRC_LSE:
 		*rate = STM32_LSE_FREQ;
@@ -512,8 +569,43 @@ static void set_up_plls(void)
 		stm32_clock_switch_to_hsi();
 	}
 	LL_RCC_PLL_Disable();
-
 #endif
+
+#if defined(STM32_PLLSAI_ENABLED)
+
+	// LL_RCC_PLL_Disable();
+	// LL_RCC_PLLSAI_Disable();
+	// LL_RCC_PLLI2S_Disable();
+
+
+	if (IS_ENABLED(STM32_PLLSAI_Q_ENABLED)) {
+		LL_RCC_PLLSAI_ConfigDomain_SAI(LL_RCC_PLLSOURCE_HSE,
+					       pllsaim(STM32_PLLSAI_M_DIVISOR),
+					       STM32_PLLSAI_N_MULTIPLIER,
+					       pllsaiq(STM32_PLLSAI_Q_DIVISOR),
+						   pllsaidivq(1));
+	}
+
+	if (IS_ENABLED(STM32_PLLSAI_R_ENABLED) & IS_ENABLED(STM32_PLLSAI_DIVR_ENABLED)) {
+		LL_RCC_PLLSAI_ConfigDomain_LTDC(LL_RCC_PLLSOURCE_HSE,
+					       pllsaim(STM32_PLLSAI_M_DIVISOR),
+					       STM32_PLLSAI_N_MULTIPLIER,
+					       pllsair(STM32_PLLSAI_R_DIVISOR),
+						   pllsaidivr(STM32_PLLSAI_DIVR_DIVISOR));
+	}
+
+	if (IS_ENABLED(STM32_PLLSAI_P_ENABLED)) {
+		LL_RCC_PLLSAI_ConfigDomain_48M(LL_RCC_PLLSOURCE_HSE,
+					       pllsaim(STM32_PLLSAI_M_DIVISOR),
+					       STM32_PLLSAI_N_MULTIPLIER,
+					       pllsaip(STM32_PLLSAI_P_DIVISOR));
+	}
+	/* Enable PLLSAI */
+	LL_RCC_PLLSAI_Enable();
+	while (LL_RCC_PLLSAI_IsReady() != 1U) {
+		/* Wait for PLLSAI ready */
+	}
+#endif /* STM32_PLLSAI_ENABLED */
 
 #if defined(STM32_PLL2_ENABLED)
 	/*

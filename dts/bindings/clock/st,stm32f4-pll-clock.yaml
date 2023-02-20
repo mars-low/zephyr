@@ -63,3 +63,9 @@ properties:
         PLL division factor for pllx_r_ck
         Valid range: 1 - 128
 
+  r-divr:
+    type: int
+    description: |
+        Second stage division factor for pllx_r_ck output
+        Valid values: 2, 4, 8, 16
+

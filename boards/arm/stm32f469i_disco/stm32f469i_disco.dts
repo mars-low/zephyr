@@ -94,13 +94,14 @@
 	div-p = <6>;
 	div-q = <2>;
 	div-r = <2>;
+	r-divr = <4>;
 	clocks = <&clk_hse>;
 	status = "okay";
 };
 
 &rcc {
 	clocks = <&pll>;
-	clock-frequency = <DT_FREQ_M(168)>;
+	clock-frequency = <DT_FREQ_M(180)>;
 	ahb-prescaler = <1>;
 	apb1-prescaler = <4>;
 	apb2-prescaler = <2>;
