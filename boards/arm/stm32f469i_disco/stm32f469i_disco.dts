@@ -297,7 +297,7 @@ zephyr_udc0: &usbotg_fs {
 };
 
 &otm8009a {
-	reset-gpios = <&gpioh 7 GPIO_ACTIVE_LOW>; //5 RESX Reset, active low PH7
+	reset-gpios = <&gpioh 7 GPIO_ACTIVE_HIGH>; //5 RESX Reset, active low PH7
 	bl-gpios = <&gpioa 3 GPIO_ACTIVE_HIGH>;
 	data-lanes = <2>;
 	pixel-format = <MIPI_DSI_PIXFMT_RGB888>;
